@@ -1,0 +1,70 @@
+---
+title: "## NBA Arenas and MLB Stadiums"
+author: "Massimo Malandra"
+date: "13 de abril de 2018"
+output: html_document
+---
+
+```{r setup, include = FALSE, message = FALSE}
+chooseCRANmirror(graphics=FALSE, ind=1)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+<br>
+
+This map, created using the leaflet package in R, illustrates all current arenas used by current teams playing in the National Basket Association (NBA) and all current stadiums and ballparks used by current teams playing in the Major League Baseball (MLB). In total, 59 venues are represented, with corresponding venue name, team who plays in that venue and seating capacity.
+
+<br>
+
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
+library(leaflet)
+library(dplyr)
+```
+
+
+```{r, echo = FALSE}
+MLBstadiums <- data.frame(
+  stadiums = c("Angel Stadium", "AT&T Park", "Busch Stadium", "Chase Field", "Citi Field", "Citizens Bank Park", "Comerica Park", "Coors Field", "Dodger Stadium", "Fenway Park", "Globe Life Park in Arlington", "Great American Ball Park", "Guaranteed Rate Field", "Kauffman Stadium", "Marlins Park", "Miller Park","Minute Maid Park", "Nationals Park", "Oakland-Alameda County Coliseum", "Oriole Park at Camden Yards", "Petco Park", "PNC Park", "Progressive Field", "Rogers Center", "Safeco Field", "SunTrust Park", "Target Field", "Tropicana Field", "Wrigley Field", "Yankee Stadium"),
+  lat = c(33.800278, 37.778611, 38.6225, 33.445278, 40.756944, 39.905833, 42.339167, 39.756111, 34.073611, 42.34625, 32.751389, 39.0975, 41.83, 39.051389, 25.778056, 43.028333, 29.756944, 38.872778, 37.751667, 39.283889, 32.7073, 40.446944, 41.495833, 43.641389, 47.591, 33.89, 44.981667, 27.768333, 41.948038, 40.829167),
+  lng = c(-117.882778, -122.389167, -90.193056, -112.066944, -73.845833, -75.166389, -83.048611, -104.994167, -118.24, -71.09775,-97.082778, -84.506667, -87.633889, -94.480556, -80.219722, -87.971111, -95.355556, -77.0075, -122.200556, -76.621667,  -117.1566, -80.005833, -81.685278, -79.389167, -122.333, -84.468, -93.278333, -82.653333, -87.65568, -73.926389),
+  location = c("Anaheim, California", "San Francisco, California", "St. Louis, Missouri", "Phoenix, Arizona", "Queens, New York", "Philadelphia, Pennsylvania", "Detroit, Michigan", "Denver, Colorado", "Los Angeles, California", "Boston, Massachusetts", "Arlington, Texas", "Cincinnati, Ohio", "Chicago, Illinois", "Kansas City, Missouri", "Miami, Florida", "Milwaukee, Wisconsin", "Houston, Texas", "Washington, D.C.", "Oakland, California", "Baltimore, Maryland", "San Diego, California", "Pittsburgh, Pennsylvania", "Cleveland, Ohio", "Toronto, Ontario", "Seattle, Washington", "Cumberland, Georgia", "Minneapolis, Minnesota", "St. Petersburg, Florida", "Chicago, Illinois", "Bronx, New York"), 
+  team = c( "Los Angeles Angels", "San Francisco Giants", "St. Louis Cardinals", "Arizona Diamondbacks", "New York Mets", "Philadelphia Phillies", "Detroit Tigers", "Colorado Rockies", "Los Angeles Dodgers", "Boston Red Sox", "Texas Rangers", "Cincinnati Reds", "Chicago White Sox", "Kansas City Royals", "Miami Marlins", "Milwaukee Brewers", "Houston Astros", "Washington Nationals", "Oakland Athletics", "Baltimore Orioles", "San Diego Padres", "Pittsburgh Pirates", "Cleveland Indians", "Toronto Blue Jays", "Seattle Mariners", "Atlanta Braves", "Minnesota Twins", "Tampa Bay Rays", "Chicago Cubs", "New York Yankees"),
+  capacity = c(45.477, 41.915, 45.529, 48.686, 41.922, 43.651, 41.299, 50.398, 56.000, 37.755, 48.114, 42.319, 40.615, 37.903, 36.742, 41.900, 41.168, 41.339, 47.170, 45.971, 40.209, 38.362, 35.051, 49.282, 47.715, 41.149, 38.885, 31.042, 41.649, 47.422), 
+  opened = c(1966, 2000, 2006, 1998, 2009, 2004, 2000, 1995, 1962, 1912, 1994, 2003, 1991, 1973, 2012, 2001, 2000, 2008, 1966, 1992, 2004, 2001, 1994, 1989, 1999, 2017, 2010, 1990, 1914, 2009),
+  league = "MLB")
+
+
+NBAarenas <- data.frame(
+  arenas = c("Air Canada Center", "American Airlines Arena", "American Airlines Center", "Amway Center", "AT&T Center", "Bankers Life Fieldhouse", "Barclays Center", "Bradley Center", "Capital One Arena", "Chesapeake Energy Arena", "FedEx Forum", "Golden 1 Center", "Little Caesars Arena", "Madison Square Garden", "Moda Center", "Oracle Arena", "Pepsi Center", "Phillips Arena", "Quicken Loans Arena", "Smoothie King Center", "Spectrum Center", "Staples Center", "Talking Stick Resort Arena", "Target Center", "TD Garden", "Toyota Center", "United Center", "Vivint Smart Home Arena", "Wells Fargo Center"), 
+  lat = c(43.643333, 25.781389, 32.790556, 28.539167, 29.426944, 39.763889, 40.682661, 43.043611, 38.898056,  35.463333, 35.138333, 38.580361, 42.341172, 40.750556, 45.531667, 37.750278, 39.748611, 33.757222, 41.496389, 29.948889, 35.225, 34.043056, 33.445833, 44.979444, 42.366303, 29.750833, 41.880556, 40.768333, 39.901111),
+  lng = c(-79.379167, -80.188056, -96.810278, -81.383611, -98.4375, -86.155556, -73.975225, -87.916944, -77.020833, -97.515, -90.050556,  -121.499611, -83.054911, -73.993611, -122.666667, -122.203056, -105.0075, -84.396389, -81.688056, -90.081944, -80.839167, -118.267222, -112.071389, -93.276111, -71.062228, -95.362222, -87.674167, -111.901111, -75.171944),
+  location = c("Toronto, Ontario", "Miami, Florida", "Dallas, Texas", "Orlando, Florida",  "San Antonio, Texas", "Indianapolis, Indiana", "Brooklyn, New York", "Milwaukee, Wisconsin", "Washington, D.C.", "Oklahoma City, Oklahoma", "Memphis, Tennessee", "Sacramento, California", "Detroit, Michigan", "New York, New York", "Portland, Oregon", "Oakland, California", "Denver, Colorado", "Atlanta, Georgia", "Cleveland, Ohio", "New Orleans, Louisiana", "Charlotte, North Carolina", "Los Angeles, California", "Phoenix, Arizona", "Minneapolis, Minnesota", "Boston, Massachusetts", "Houston, Texas", "Chicago, Illinois", "Salt Lake City, Utah", "Philadelphia, Pennsylvania"),
+  team = c("Toronto Raptors", "Miami Heat", "Dallas Mavericks", "Orlando Magic", "San Antonio Spurs", "Indiana Pacers", "Brooklyn Nets", "Milwaukee Bucks", "Washington Wizards", "Oklahoma City Thunder", "Memphis Grizzlies", "Sacramento Kings", "Detroit Pistons", "New York Knicks", "Portland Trail Blazers", "Golden State Warriors", "Denver Nuggets", "Atlanta Hawks", "Cleveland Cavaliers", "New Orleans Pelicans", "Charlotte Hornets", "Los Angeles Lakers - Los Angeles Clippers", "Phoenix Suns", "Minnesota Timberwolves", "Boston Celtics", "Houston Rockets", "Chicago Bulls", "Utah Jazz", "Philadelphia 76ers"),
+  capacity = c(19.8, 19.6, 19.2, 18.846, 18.418, 17.923, 17.732, 18.717, 20.356, 18.203, 18.119, 17.608, 20.491, 19.812, 19.98, 19.596, 19.155, 18.118, 20.562, 16.867, 19.077, 19.06, 18.422, 19.356, 18.624, 18.055, 20.917, 18.303, 20.328), 
+  opened = c(1999, 1999, 2001, 2010, 2002, 1999, 2012, 1988, 1997, 2002, 2004, 2016, 2017, 1968, 1995, 1966, 1999, 1999, 1994, 1999, 2005, 1999, 1992, 1990, 1995, 2003, 1994, 1991, 1996), 
+  league = "NBA")
+
+
+names(MLBstadiums)[names(MLBstadiums) == "stadiums"] <- "names"
+names(NBAarenas)[names(NBAarenas) == "arenas"] <- "names"
+
+usSports <- rbind(NBAarenas, MLBstadiums)
+
+usSports$col <- if_else(usSports$league == "MLB", "red", "blue")
+
+myMap <- leaflet() %>% 
+  addTiles() %>%
+  addCircleMarkers(color = usSports$col, 
+                   weight = 2,
+                   radius = usSports$capacity / 2,
+                   lat = usSports$lat, 
+                   lng = usSports$lng,
+                   popup = paste(usSports$names, ":<br> home of the ",
+                                 usSports$team, "<br> capacity:",
+                                 usSports$capacity),
+                   clusterOptions = markerClusterOptions()) %>%
+  addLegend(labels = unique(usSports$league), colors = unique(usSports$col))
+
+myMap
+```

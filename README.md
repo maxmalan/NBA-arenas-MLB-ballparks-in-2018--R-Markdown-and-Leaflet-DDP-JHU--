@@ -4,4 +4,4 @@ This repository contains a map created with leaflet package in R and an R markdo
 
 The map can be also seen here:
 <br>
-https://maxmalan.github.io/R-Markdown-and-Leaflet---DDP-JHU/NBA_arenas_and_MLB_stadiums.html
+https://maxmalan.github.io/R-Markdown-and-Leaflet-DDP-JHU/NBA_arenas_and_MLB_stadiums.html
